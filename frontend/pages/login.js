@@ -30,17 +30,14 @@ export default function Login() {
     const result = await login(email, password);
     if (!result.success) {
       setError(result.message);
-    } else if (isAuthenticated) {
-      router.push('/dashboard');
-      return null;
     }
     setLoading(false);
   };
 
-  // if (isAuthenticated) {
-  //   router.push('/dashboard');
-  //   return null;
-  // }
+  if (isAuthenticated) {
+    router.push('/dashboard');
+    return null;
+  }
 
   return (
     <Container component="main" maxWidth="xs">
