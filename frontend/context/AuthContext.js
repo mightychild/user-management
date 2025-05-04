@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
       const { data: { token, user } } = await api.post('/auth/login', { email, password });
       localStorage.setItem('token', token);
       setUser(user);
-      router.push('/dashboard');
+      router.push('/admin');
       return { success: true };
     } catch (error) {
       return {
@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
       const { data: { token, user } } = await api.post('/auth/signup', userData);
       localStorage.setItem('token', token);
       setUser(user);
-      router.push('/dashboard');
+      router.push('/admin');
       return { success: true };
     } catch (error) {
       return {

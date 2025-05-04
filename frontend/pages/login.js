@@ -19,7 +19,7 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e) => {
@@ -35,8 +35,14 @@ export default function Login() {
   };
 
   if (isAuthenticated) {
-    router.push('/dashboard');
-    return null;
+    if (user && user.role === 'admin') {
+      router.push('/admin');
+      return null;
+    }
+    if (user && user.role !== 'admin') {
+      router.push('/dashboard');
+      return null;
+    }
   }
 
   return (
