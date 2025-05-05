@@ -4,7 +4,7 @@
       {
         "src": "backend/server.js",
         "use": "@vercel/node",
-        "config": { "includeFiles": ["server/**"] }
+        "config": { "includeFiles": ["backend/**"] }
       },
       {
         "src": "frontend/package.json",
