@@ -5,12 +5,17 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Please tell us your name'],
-    trim: true
+    required: [true, 'Please provide a name'],
+    trim: true,
+    maxlength: [50, 'Name cannot exceed 50 characters']
+  },
+  profilePhoto: {
+    type: String,
+    default: ''
   },
   email: {
     type: String,
-    required: [true, 'Please provide your email'],
+    required: [true, 'Please provide an email'],
     unique: true,
     lowercase: true,
     validate: [validator.isEmail, 'Please provide a valid email']
@@ -41,15 +46,12 @@ const userSchema = new mongoose.Schema({
       message: 'Passwords are not the same!'
     }
   },
-  profilePhoto: {
-    type: String,
-    default: 'default.jpg'
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
-}, {
-  timestamps: true
 });
 
-// Password encryption middleware
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   this.password = await bcrypt.hash(this.password, 12);
@@ -57,9 +59,8 @@ userSchema.pre('save', async function(next) {
   next();
 });
 
-// Instance method to check password
-userSchema.methods.correctPassword = async function(candidatePassword, userPassword) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+userSchema.methods.correctPassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
 };
 
 const User = mongoose.model('User', userSchema);
