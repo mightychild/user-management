@@ -2,23 +2,36 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '../context/AuthContext';
 import Layout from '../components/Layout';
-import { Typography, Box, Button } from '@mui/material';
+import { Typography, Box, Button, CircularProgress } from '@mui/material';
 
 export default function AdminPanel() {
-  const { user } = useAuth();
+  // const { user, isAdmin, loading } = useAuth();
+  
   const router = useRouter();
 
   // useEffect(() => {
-  //   if (user && user.role !== 'admin') {
+  //   if (!loading && !isAdmin) {
   //     router.replace('/dashboard');
   //   }
-  // }, [user, router]);
+  // }, [loading, isAdmin, router]);
 
-  // if (!user || user.role !== 'admin') {
+  // if (loading || !user) {
   //   return (
   //     <Layout>
   //       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-  //         <Typography>Loading...</Typography>
+  //         <CircularProgress />
+  //       </Box>
+  //     </Layout>
+  //   );
+  // }
+
+  // if (!isAdmin) {
+  //   return (
+  //     <Layout>
+  //       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+  //         <Typography color="error">
+  //           You don't have permission to access this page
+  //         </Typography>
   //       </Box>
   //     </Layout>
   //   );
@@ -36,9 +49,6 @@ export default function AdminPanel() {
           sx={{ mr: 2 }}
         >
           Manage Users
-        </Button>
-        <Button variant="outlined">
-          System Settings
         </Button>
       </Box>
     </Layout>

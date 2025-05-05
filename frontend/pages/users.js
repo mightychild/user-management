@@ -1,174 +1,158 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  Container,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  MenuItem,
-  Typography,
-  TextField,
-  Avatar
-} from '@mui/material';
-import AddUserModal from '../components/AddUserModal';
+import { useAuth } from '../context/AuthContext';
+import { Container, Box, Typography, Button, CircularProgress } from '@mui/material';
 import api from '../lib/api';
+import UserTable from '../components/UserTable';
+import AddUserModal from '../components/AddUserModal';
+import EditUserModal from '../components/EditUserModal';
+import FilterDialog from '../components/FilterDialog';
 
-export default function UsersPage() {
+export default function AdminUsersPage() {
+  const { isAdmin } = useAuth();
   const [users, setUsers] = useState([]);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({});
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get('/users');
-      setUsers(response.data.users);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
+      setLoading(true);
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        ...filters
+      };
+      if (searchQuery) params.q = searchQuery;
+
+      const { data } = await api.get('/users', { params });
+      setUsers(data.data.users);
+      setTotal(data.total);
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  // useEffect(() => {
+  //   if (isAdmin) {
+  //     fetchUsers();
+  //   }
+  // }, [isAdmin, page, rowsPerPage, searchQuery, filters]);
 
-  const handleUserAdded = (newUser) => {
-    setUsers([...users, newUser]);
+  const handleAddUser = async (userData) => {
+    try {
+      const { data } = await api.post('/users', userData);
+      setUsers([data.data.user, ...users]);
+    } catch (err) {
+      console.error('Failed to add user:', err);
+      throw err;
+    }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || user.status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
-  });
+  const handleUpdateUser = async (userId, userData) => {
+    try {
+      const { data } = await api.patch(`/users/${userId}`, userData);
+      setUsers(users.map(u => u._id === userId ? data.data.user : u));
+    } catch (err) {
+      console.error('Failed to update user:', err);
+      throw err;
+    }
+  };
 
-  if (loading) {
+  const handleDeleteUser = async (userId) => {
+    try {
+      await api.delete(`/users/${userId}`);
+      setUsers(users.filter(u => u._id !== userId));
+    } catch (err) {
+      console.error('Failed to delete user:', err);
+    }
+  };
+
+  const handleBulkDelete = async (userIds) => {
+    try {
+      await api.delete('/users', { data: { ids: userIds } });
+      setUsers(users.filter(u => !userIds.includes(u._id)));
+    } catch (err) {
+      console.error('Failed to delete users:', err);
+    }
+  };
+
+  if (!isAdmin) {
     return (
       <Container>
-        <Typography>Loading users...</Typography>
+        <Typography variant="h6" color="error">
+          You don't have permission to access this page
+        </Typography>
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+    <Container maxWidth="lg">
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4">User Management</Typography>
-        <Button
-          variant="contained"
+        <Button 
+          variant="contained" 
           onClick={() => setModalOpen(true)}
         >
           Add User
         </Button>
       </Box>
 
-      {/* Search and Filter Bar */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <TextField
-          label="Search users"
-          variant="outlined"
-          size="small"
-          fullWidth
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+      {loading ? (
+        <Box display="flex" justifyContent="center">
+          <CircularProgress />
+        </Box>
+      ) : (
+        <UserTable
+          users={users}
+          total={total}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          onRowsPerPageChange={(e) => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          onEdit={(user) => {
+            setCurrentUser(user);
+            setEditModalOpen(true);
+          }}
+          onDelete={handleDeleteUser}
+          onBulkDelete={handleBulkDelete}
+          onSearch={setSearchQuery}
+          onFilter={() => setFilterDialogOpen(true)}
         />
-        <TextField
-          select
-          label="Role"
-          size="small"
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          sx={{ minWidth: 120 }}
-        >
-          <MenuItem value="all">All Roles</MenuItem>
-          <MenuItem value="user">User</MenuItem>
-          <MenuItem value="admin">Admin</MenuItem>
-        </TextField>
-        <TextField
-          select
-          label="Status"
-          size="small"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          sx={{ minWidth: 120 }}
-        >
-          <MenuItem value="all">All Status</MenuItem>
-          <MenuItem value="active">Active</MenuItem>
-          <MenuItem value="inactive">Inactive</MenuItem>
-        </TextField>
-      </Box>
+      )}
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Profile</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Role</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredUsers.map((user) => (
-              <TableRow key={user._id}>
-                <TableCell>
-                  <Avatar src={user.profilePhoto} alt={user.name} />
-                </TableCell>
-                <TableCell>{user.name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  <Box 
-                    component="span" 
-                    sx={{ 
-                      p: 1, 
-                      borderRadius: 1, 
-                      bgcolor: user.role === 'admin' ? 'primary.light' : 'grey.200',
-                      color: user.role === 'admin' ? 'primary.contrastText' : 'inherit'
-                    }}
-                  >
-                    {user.role}
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Box 
-                    component="span" 
-                    sx={{ 
-                      p: 1, 
-                      borderRadius: 1, 
-                      bgcolor: user.status === 'active' ? 'success.light' : 'error.light',
-                      color: 'common.white'
-                    }}
-                  >
-                    {user.status}
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Button size="small">Edit</Button>
-                  <Button size="small" color="error">Delete</Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <AddUserModal
-        open={modalOpen}
+      <AddUserModal 
+        open={modalOpen} 
         onClose={() => setModalOpen(false)}
-        onUserAdded={handleUserAdded}
+        onUserAdded={handleAddUser}
+      />
+
+      <EditUserModal
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        user={currentUser}
+        onUserUpdated={handleUpdateUser}
+      />
+
+      <FilterDialog
+        open={filterDialogOpen}
+        onClose={() => setFilterDialogOpen(false)}
+        onApply={(newFilters) => {
+          setFilters(newFilters);
+          setPage(0);
+        }}
       />
     </Container>
   );

@@ -1,73 +1,60 @@
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip } from '@mui/material';
-import { Edit, Delete } from '@mui/icons-material';
-import PropTypes from 'prop-types';
+// frontend/components/UserTable.js
+import Link from 'next/link';
 
-export default function UserTable({ users, onEdit, onDelete }) {
+export default function UserTable({ users, onDelete }) {
   return (
-    <TableContainer component={Paper} elevation={3}>
-      <Table aria-label="user management table">
-        <TableHead>
-          <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Email</TableCell>
-            <TableCell>Role</TableCell>
-            <TableCell>Status</TableCell>
-            <TableCell align="center">Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {users.map((user) => (
-            <TableRow key={user._id} hover>
-              <TableCell>{user.name}</TableCell>
-              <TableCell>{user.email}</TableCell>
-              <TableCell>
-                <Chip
-                  label={user.role}
-                  color={user.role === 'admin' ? 'primary' : 'default'}
-                  size="small"
-                />
-              </TableCell>
-              <TableCell>
-                <Chip
-                  label={user.status}
-                  color={user.status === 'active' ? 'success' : 'error'}
-                  size="small"
-                />
-              </TableCell>
-              <TableCell align="center">
-                <IconButton 
-                  onClick={() => onEdit(user)}
-                  aria-label={`edit ${user.name}`}
-                  color="primary"
-                >
-                  <Edit fontSize="small" />
-                </IconButton>
-                <IconButton 
+    <div className="overflow-x-auto">
+      <table className="min-w-full bg-white">
+        <thead>
+          <tr>
+            <th className="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Name
+            </th>
+            <th className="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Email
+            </th>
+            <th className="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Role
+            </th>
+            <th className="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Status
+            </th>
+            <th className="py-2 px-4 border-b border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map(user => (
+            <tr key={user._id}>
+              <td className="py-2 px-4 border-b border-gray-200">
+                <div className="flex items-center">
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-8 h-8 rounded-full mr-2"
+                  />
+                  {user.name}
+                </div>
+              </td>
+              <td className="py-2 px-4 border-b border-gray-200">{user.email}</td>
+              <td className="py-2 px-4 border-b border-gray-200 capitalize">{user.role}</td>
+              <td className="py-2 px-4 border-b border-gray-200 capitalize">{user.status}</td>
+              <td className="py-2 px-4 border-b border-gray-200">
+                <Link href={`/users/${user._id}`}>
+                  <a className="text-indigo-600 hover:text-indigo-900 mr-2">Edit</a>
+                </Link>
+                <button
                   onClick={() => onDelete(user._id)}
-                  aria-label={`delete ${user.name}`}
-                  color="error"
+                  className="text-red-600 hover:text-red-900"
                 >
-                  <Delete fontSize="small" />
-                </IconButton>
-              </TableCell>
-            </TableRow>
+                  Delete
+                </button>
+              </td>
+            </tr>
           ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+        </tbody>
+      </table>
+    </div>
   );
 }
-
-UserTable.propTypes = {
-  users: PropTypes.arrayOf(
-    PropTypes.shape({
-      _id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
-      email: PropTypes.string.isRequired,
-      role: PropTypes.oneOf(['admin', 'user']).isRequired,
-      status: PropTypes.oneOf(['active', 'inactive']).isRequired,
-    })
-  ).isRequired,
-  onEdit: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
-};

@@ -1,35 +1,37 @@
-import { Container, CssBaseline, Box, Toolbar } from '@mui/material';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
-import Navbar from './Navbar';
 
 export default function Layout({ children }) {
+  const router = useRouter();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    router.push('/login');
+  };
+
   return (
     <>
       <Head>
-        <title>User Management Dashboard</title>
-        <meta name="description" content="User management system" />
+        <title>User Management</title>
+        <meta name="description" content="User Management Dashboard" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      
-      <CssBaseline />
-      <Box sx={{ display: 'flex' }}>
-        <Navbar />
-        <Box
-          component="main"
-          sx={{
-            flexGrow: 1,
-            p: 3,
-            width: '100%',
-            minHeight: '100vh',
-            backgroundColor: '#f5f5f5'
-          }}
-        >
-          <Toolbar /> {/* This creates space below the app bar */}
-          <Container maxWidth="xl">
-            {children}
-          </Container>
-        </Box>
-      </Box>
+
+      <nav className="bg-gray-800 text-white p-4">
+        <div className="container mx-auto flex justify-between items-center">
+          <h1 className="text-xl font-bold">User Dashboard</h1>
+          {router.pathname !== '/login' && (
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded"
+            >
+              Logout
+            </button>
+          )}
+        </div>
+      </nav>
+
+      <main className="container mx-auto p-4">{children}</main>
     </>
   );
 }
