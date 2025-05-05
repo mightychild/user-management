@@ -5,6 +5,9 @@ require('dotenv').config();
 
 const app = express();
 
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
+
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000'
