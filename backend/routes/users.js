@@ -1,24 +1,20 @@
-class AppError extends Error {
-  constructor(message, statusCode) {
-    super(message);
-    this.statusCode = statusCode;
-    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
-    this.isOperational = true;
-    Error.captureStackTrace(this, this.constructor);
-  }
-}
+const express = require('express');
+const userController = require('../controllers/users');
+const authController = require('../controllers/auth');
 
-const errorHandler = (err, req, res, next) => {
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
+const router = express.Router();
 
-  res.status(err.statusCode).json({
-    status: err.status,
-    message: err.message
-  });
-};
+// Protect all routes after this middleware
+// router.use(authController.protect);
+router.post('/', userController.createUser);
 
-module.exports = {
-  AppError,
-  errorHandler
-};
+router.route('/')
+  .get(userController.getAllUsers)
+  .post(userController.createUser);
+
+router.route('/:id')
+  .get(userController.getUser)
+  .patch(userController.updateUser)
+  .delete(userController.deleteUser);
+
+module.exports = router;

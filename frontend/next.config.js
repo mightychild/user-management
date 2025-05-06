@@ -1,10 +1,6 @@
 module.exports = {
-    async rewrites() {
-      return [
-        {
-          source: '/api/:path*',
-          destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`
-        }
-      ]
-    }
-  }
+  reactStrictMode: true,
+  env: {
+    API_URL: process.env.API_URL,
+  },
+};

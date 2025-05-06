@@ -1,12 +1,20 @@
-// frontend/pages/_app.js
-import '../styles/globals.css';
-import Layout from '../components/Layout';
+import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import Head from 'next/head';
+
+const theme = createTheme();
 
 function MyApp({ Component, pageProps }) {
   return (
-    <Layout>
-      <Component {...pageProps} />
-    </Layout>
+    <>
+      <Head>
+        <title>User Management</title>
+        <meta name="viewport" content="initial-scale=1, width=device-width" />
+      </Head>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Component {...pageProps} />
+      </ThemeProvider>
+    </>
   );
 }
 

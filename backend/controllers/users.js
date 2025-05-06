@@ -1,29 +1,35 @@
-// backend/controllers/users.js
 const User = require('../models/User');
-const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/errorHandler');
 const catchAsync = require('../utils/catchAsync');
 
-exports.getAllUsers = catchAsync(async (req, res, next) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+exports.getAllUsers = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-  const users = await User.find()
-    .skip(skip)
-    .limit(limit);
+    const [users, total] = await Promise.all([
+      User.find().skip(skip).limit(limit),
+      User.countDocuments()
+    ]);
 
-  const total = await User.countDocuments();
-
-  res.status(200).json({
-    status: 'success',
-    results: users.length,
-    total,
-    data: {
-      users
-    }
-  });
-});
+    res.status(200).json({
+      status: 'success',
+      data: { users },
+      pagination: {
+        total,
+        page,
+        limit,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'error',
+      message: err.message
+    });
+  }
+};
 
 exports.getUser = catchAsync(async (req, res, next) => {
   const user = await User.findById(req.params.id);
@@ -40,22 +46,41 @@ exports.getUser = catchAsync(async (req, res, next) => {
   });
 });
 
-exports.createUser = catchAsync(async (req, res, next) => {
-  const newUser = await User.create(req.body);
+// exports.createUser = catchAsync(async (req, res, next) => {
+//   const newUser = await User.create(req.body);
 
-  res.status(201).json({
-    status: 'success',
-    data: {
-      user: newUser
-    }
-  });
-});
+//   res.status(201).json({
+//     status: 'success',
+//     data: {
+//       user: newUser
+//     }
+//   });
+// });
+
+exports.createUser = async (req, res) => {
+  try {
+    const user = await User.create(req.body);
+    res.status(201).json({
+      status: 'success',
+      data: { user }
+    });
+  } catch (err) {
+    res.status(400).json({
+      status: 'error',
+      message: err.message
+    });
+  }
+};
 
 exports.updateUser = catchAsync(async (req, res, next) => {
-  const user = await User.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
-  });
+  const user = await User.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    {
+      new: true,
+      runValidators: true
+    }
+  );
 
   if (!user) {
     return next(new AppError('No user found with that ID', 404));

@@ -1,5 +1,5 @@
+import { AppBar, Toolbar, Typography, Button, Container } from '@mui/material';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
 
 export default function Layout({ children }) {
   const router = useRouter();
@@ -11,27 +11,21 @@ export default function Layout({ children }) {
 
   return (
     <>
-      <Head>
-        <title>User Management</title>
-        <meta name="description" content="User Management Dashboard" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <nav className="bg-gray-800 text-white p-4">
-        <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold">User Dashboard</h1>
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+            User Management
+          </Typography>
           {router.pathname !== '/login' && (
-            <button
-              onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 px-4 py-2 rounded"
-            >
+            <Button color="inherit" onClick={handleLogout}>
               Logout
-            </button>
+            </Button>
           )}
-        </div>
-      </nav>
-
-      <main className="container mx-auto p-4">{children}</main>
+        </Toolbar>
+      </AppBar>
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+        {children}
+      </Container>
     </>
   );
 }

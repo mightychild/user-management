@@ -1,38 +1,35 @@
-// backend/controllers/auth.js
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
-const { promisify } = require('util');
 
-const signToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN
-  });
-};
-
-exports.login = async (req, res, next) => {
+exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    
-    // Simple authentication for demo (in real app, use proper auth)
-    if (email !== 'admin@example.com' || password !== 'admin123') {
+
+    // 1. Check if email and password exist
+    if (!email || !password) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Please provide email and password'
+      });
+    }
+
+    // 2. Check if user exists and password is correct
+    const user = await User.findOne({ email }).select('+password');
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({
-        status: 'fail',
+        status: 'error',
         message: 'Incorrect email or password'
       });
     }
 
-    // Check if admin user exists, if not create one
-    let user = await User.findOne({ email });
-    if (!user) {
-      user = await User.create({
-        name: 'Admin',
-        email: 'admin@example.com',
-        role: 'admin',
-        status: 'active'
-      });
-    }
+    // 3. Create token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRES_IN
+    });
 
-    const token = signToken(user._id);
+    // 4. Remove password from output
+    user.password = undefined;
 
     res.status(200).json({
       status: 'success',
@@ -42,37 +39,9 @@ exports.login = async (req, res, next) => {
       }
     });
   } catch (err) {
-    next(err);
-  }
-};
-
-exports.protect = async (req, res, next) => {
-  try {
-    let token;
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-
-    if (!token) {
-      return res.status(401).json({
-        status: 'fail',
-        message: 'You are not logged in! Please log in to get access.'
-      });
-    }
-
-    const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-    const currentUser = await User.findById(decoded.id);
-    
-    if (!currentUser) {
-      return res.status(401).json({
-        status: 'fail',
-        message: 'The user belonging to this token does no longer exist.'
-      });
-    }
-
-    req.user = currentUser;
-    next();
-  } catch (err) {
-    next(err);
+    res.status(500).json({
+      status: 'error',
+      message: 'Internal server error'
+    });
   }
 };
